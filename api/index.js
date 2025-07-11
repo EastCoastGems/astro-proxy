@@ -8,7 +8,9 @@ const corsHeaders = {
 
 export default async function handler(req, res) {
 if (req.method === 'OPTIONS') {
-return res.status(200).set(corsHeaders).end();
+res.writeHead(200, corsHeaders);
+res.end()'
+return;
 }
 
 if (req.method !== 'POST') {
