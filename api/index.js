@@ -7,30 +7,28 @@ const corsHeaders = {
 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// Handle CORS preflight request
 if (req.method === 'OPTIONS') {
 return res.status(204).set(corsHeaders).end();
 }
 
-// Only allow POST
 if (req.method !== 'POST') {
-return res
-.status(405)
-.set(corsHeaders)
-.json({ error: 'Only POST allowed' });
+return res.status(405).set(corsHeaders).json({ error: 'Only POST allowed' });
 }
 
 try {
 const payload = req.body;
+if (!payload) {
+throw new Error('Missing request body');
+}
 
-const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Replace with your actual token
+const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Put your token here!
 
 const endpoint =
 payload.chartType === 'full'
 ? 'https://json.freeastrologyapi.com/api/planets'
 : 'https://json.freeastrologyapi.com/api/birth-details';
 
-const apiResponse = await fetch(endpoint, {
+const response = await fetch(endpoint, {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
@@ -39,11 +37,16 @@ Authorization: `Bearer ${token}`,
 body: JSON.stringify(payload),
 });
 
-const data = await apiResponse.json();
+if (!response.ok) {
+const errorText = await response.text();
+throw new Error(`API error: ${response.status} ${errorText}`);
+}
+
+const data = await response.json();
 
 return res.status(200).set(corsHeaders).json(data);
 } catch (err) {
-console.error('Proxy Error:', err);
-return res.status(500).set(corsHeaders).json({ error: 'Proxy failed' });
+console.error('Proxy Error:', err.message || err);
+return res.status(500).set(corsHeaders).json({ error: 'Proxy failed', details: err.message || err });
 }
 };
