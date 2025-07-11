@@ -1,14 +1,25 @@
-const express = require('express');
-const router = express.Router();
-const fetch = require('node-fetch');
+export default async function handler(req, res) {
+// Allow CORS for all origins (change '*' to your Shopify domain if you want)
+res.setHeader('Access-Control-Allow-Origin', '*');
+res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-const FREE_ASTROLOGY_API_KEY = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY';
+// Handle CORS preflight requests
+if (req.method === 'OPTIONS') {
+return res.status(200).end();
+}
 
-router.post('/', async (req, res) => {
+if (req.method !== 'POST') {
+return res.status(405).json({ error: 'Only POST allowed' });
+}
+
 try {
 const payload = req.body;
 
-const endpoint = payload.chartType === 'full'
+const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Your FreeAstrologyAPI token
+
+const endpoint =
+payload.chartType === 'full'
 ? 'https://json.freeastrologyapi.com/api/planets'
 : 'https://json.freeastrologyapi.com/api/birth-details';
 
@@ -16,17 +27,16 @@ const response = await fetch(endpoint, {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
-'Authorization': `Bearer ${FREE_ASTROLOGY_API_KEY}`,
+Authorization: `Bearer ${token}`,
 },
 body: JSON.stringify(payload),
 });
 
 const data = await response.json();
+
 res.status(200).json(data);
 } catch (error) {
-console.error('API error:', error);
-res.status(500).json({ error: 'Proxy error occurred' });
+console.error('Proxy Error:', error);
+res.status(500).json({ error: 'Proxy failed' });
 }
-});
-
-module.exports = router;
+}
