@@ -1,42 +1,42 @@
-export default async function handler(req, res) {
-// Enable CORS
-res.setHeader('Access-Control-Allow-Origin', '*');
-res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+// Vercel Serverless Function Entry — /api endpoint
 
-// Handle preflight OPTIONS request
+const corsHeaders = {
+'Access-Control-Allow-Origin': '*',
+'Access-Control-Allow-Methods': 'POST, OPTIONS',
+'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export default async function handler(req, res) {
 if (req.method === 'OPTIONS') {
-return res.status(200).end();
+return res.status(200).set(corsHeaders).end();
 }
 
 if (req.method !== 'POST') {
-return res.status(405).json({ error: 'Only POST allowed' });
+return res.status(405).set(corsHeaders).json({ error: 'Only POST allowed' });
 }
 
-try {
+const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Replace with your real key
 const payload = req.body;
-
-const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Your actual token here
 
 const endpoint =
 payload.chartType === 'full'
 ? 'https://json.freeastrologyapi.com/api/planets'
 : 'https://json.freeastrologyapi.com/api/birth-details';
 
-const response = await fetch(endpoint, {
+try {
+const astroRes = await fetch(endpoint, {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
-'Authorization': 'Bearer ${token}'
+Authorization: `Bearer ${token}`,
 },
 body: JSON.stringify(payload),
 });
 
-const data = await response.json();
-
-res.status(200).json(data);
-} catch (error) {
-console.error('Proxy Error:', error);
-res.status(500).json({ error: 'Proxy failed' });
+const data = await astroRes.json();
+res.status(200).set(corsHeaders).json(data);
+} catch (err) {
+console.error('🔴 Proxy Error:', err);
+res.status(500).set(corsHeaders).json({ error: 'Proxy failed' });
 }
 }
