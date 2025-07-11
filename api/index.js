@@ -1,10 +1,10 @@
 export default async function handler(req, res) {
-// Allow CORS for all origins (change '*' to your Shopify domain if you want)
+// Enable CORS
 res.setHeader('Access-Control-Allow-Origin', '*');
 res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-// Handle CORS preflight requests
+// Handle preflight OPTIONS request
 if (req.method === 'OPTIONS') {
 return res.status(200).end();
 }
@@ -16,7 +16,7 @@ return res.status(405).json({ error: 'Only POST allowed' });
 try {
 const payload = req.body;
 
-const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Your FreeAstrologyAPI token
+const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Your actual token here
 
 const endpoint =
 payload.chartType === 'full'
