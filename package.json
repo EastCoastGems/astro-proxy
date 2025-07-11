@@ -1,10 +1,10 @@
 {
 "name": "astro-proxy",
 "version": "1.0.0",
-"main": "index.js",
+"main": "index.cjs",
 "type": "module",
 "scripts": {
-"start": "node api/index.js"
+"start": "node api/index.cjs"
 },
 "dependencies": {
 "cors": "^2.8.5",
