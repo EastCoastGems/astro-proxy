@@ -27,7 +27,7 @@ const response = await fetch(endpoint, {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
-'Authorization': 'Bearer KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'
+'Authorization': 'Bearer x221dwe3Jsok8RaqSDUvoIiOB5epWIQ9LZHQ1K7yZ6Q'
 },
 body: JSON.stringify(payload),
 });
