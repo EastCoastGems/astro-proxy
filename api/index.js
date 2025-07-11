@@ -33,6 +33,7 @@ body: JSON.stringify(payload),
 });
 
 const data = await response.json();
+console.log("Astrology API Response:", data);
 
 res.status(200).json(data);
 } catch (error) {
