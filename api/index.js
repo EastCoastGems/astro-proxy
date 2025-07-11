@@ -23,7 +23,7 @@ return res
 try {
 const payload = req.body;
 
-const token = 'YOUR_FREEASTROLOGYAPI_TOKEN_HERE'; // Replace with your actual token
+const token = 'KWqyhgSAwR27LkN9u04kzaeBhGDj6EFQ9c5a3apY'; // Replace with your actual token
 
 const endpoint =
 payload.chartType === 'full'
