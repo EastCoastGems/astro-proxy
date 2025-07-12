@@ -1,11 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "api/birthchart.py": {
-      "runtime": "python3.11"
+  "builds": [
+    {
+      "src": "api/birthchart.py",
+      "use": "@vercel/python"
     }
-  },
+  ],
   "routes": [
-    { "src": "/api/birthchart", "dest": "api/birthchart.py" }
+    {
+      "src": "/api/birthchart",
+      "dest": "api/birthchart.py"
+    }
   ]
 }
