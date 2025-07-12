@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/birthchart.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/birthchart", "dest": "api/birthchart.py" }
+  ]
+}
