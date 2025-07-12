@@ -1,70 +1,66 @@
+from http.server import BaseHTTPRequestHandler
 import json
+
 from skyfield.api import load, Topos
-from datetime import datetime
 from timezonefinder import TimezoneFinder
+from datetime import datetime
 import pytz
 
-planets = load('de421.bsp')
-earth = planets['earth']
-sun = planets['sun']
-moon = planets['moon']
+class handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        try:
+            # Read and parse the JSON body
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            data = json.loads(body)
 
-def handler(request):
-    try:
-        data = request.json
+            # Extract fields from input
+            birth_date = data.get("date")        # Format: "YYYY-MM-DD"
+            birth_time = data.get("time")        # Format: "HH:MM"
+            latitude = float(data.get("latitude"))
+            longitude = float(data.get("longitude"))
 
-        # Extract input
-        date_str = data.get("date")       # e.g., "1990-06-15"
-        time_str = data.get("time")       # e.g., "14:30"
-        lat = float(data.get("latitude")) # e.g., 40.7128
-        lon = float(data.get("longitude"))# e.g., -74.0060
+            # Determine timezone
+            tf = TimezoneFinder()
+            tz_str = tf.timezone_at(lng=longitude, lat=latitude)
+            if not tz_str:
+                raise ValueError("Could not determine timezone for coordinates")
 
-        if not (date_str and time_str and lat and lon):
-            raise ValueError("Missing required fields.")
+            # Convert to UTC datetime
+            local_tz = pytz.timezone(tz_str)
+            local_dt = local_tz.localize(datetime.strptime(f"{birth_date} {birth_time}", "%Y-%m-%d %H:%M"))
+            utc_dt = local_dt.astimezone(pytz.utc)
 
-        # Find timezone from lat/lon
-        tf = TimezoneFinder()
-        timezone_str = tf.timezone_at(lat=lat, lng=lon)
-        if not timezone_str:
-            raise ValueError("Could not determine timezone.")
-        
-        tz = pytz.timezone(timezone_str)
-        dt_naive = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-        dt = tz.localize(dt_naive)
+            # Load ephemeris and create chart data (basic demo)
+            eph = load('de421.bsp')
+            ts = load.timescale()
+            t = ts.from_datetime(utc_dt)
 
-        # Compute skyfield position
-        ts = load.timescale()
-        t = ts.from_datetime(dt)
+            planets = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn']
+            positions = {}
 
-        location = earth + Topos(latitude_degrees=lat, longitude_degrees=lon)
-        astrometric_sun = location.at(t).observe(sun).apparent()
-        astrometric_moon = location.at(t).observe(moon).apparent()
+            for planet in planets:
+                body = getattr(eph, planet)
+                astrometric = body.at(t).observe(Topos(latitude_degrees=latitude, longitude_degrees=longitude))
+                alt, az, distance = astrometric.apparent().altaz()
+                positions[planet] = {
+                    "altitude_degrees": alt.degrees,
+                    "azimuth_degrees": az.degrees
+                }
 
-        sun_alt, sun_az, _ = astrometric_sun.altaz()
-        moon_alt, moon_az, _ = astrometric_moon.altaz()
+            # Send response
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "datetime_utc": utc_dt.isoformat(),
+                "positions": positions
+            }).encode())
 
-        result = {
-            "datetime": dt.isoformat(),
-            "timezone": timezone_str,
-            "sun": {
-                "altitude_degrees": sun_alt.degrees,
-                "azimuth_degrees": sun_az.degrees
-            },
-            "moon": {
-                "altitude_degrees": moon_alt.degrees,
-                "azimuth_degrees": moon_az.degrees
-            }
-        }
-
-        return {
-            "statusCode": 200,
-            "headers": { "Content-Type": "application/json" },
-            "body": json.dumps(result)
-        }
-
-    except Exception as e:
-        return {
-            "statusCode": 400,
-            "headers": { "Content-Type": "application/json" },
-            "body": json.dumps({"error": str(e)})
-        }
+        except Exception as e:
+            # Error response
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            error = {"error": str(e)}
+            self.wfile.write(json.dumps(error).encode())
